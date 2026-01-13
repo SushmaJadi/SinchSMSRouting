@@ -4,6 +4,7 @@ import com.sinch.sms.routing.beans.NumberOptoutBean;
 import com.sinch.sms.routing.exception.InvalidPhoneNumberException;
 import com.sinch.sms.routing.service.NumberOptoutService;
 import com.sinch.sms.routing.util.PhoneNumberUtility;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +14,8 @@ import java.util.Optional;
 @RequestMapping("/optout")
 public class OptoutNumberController {
 
-    private final PhoneNumberUtility phoneNumberUtility;
+
+    private PhoneNumberUtility phoneNumberUtility;
     private NumberOptoutBean numberOptoutBean;
     private NumberOptoutService numberOptoutService;
 

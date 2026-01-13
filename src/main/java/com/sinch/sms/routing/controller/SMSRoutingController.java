@@ -21,7 +21,7 @@ public class SMSRoutingController {
     private static final Logger logger = LoggerFactory.getLogger(MessageRoutingService.class);
     @Autowired
     private SMSMessage smsMessage;
-    @Autowired
+
     private MessageRoutingService messageRoutingService;
 
     public SMSRoutingController(MessageRoutingService messageRoutingService) {

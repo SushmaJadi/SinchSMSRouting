@@ -8,18 +8,13 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
 
-//@Component
+@Component
 public class PhoneNumberUtility {
 
-    private PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
-
-    public PhoneNumberUtility() {
-
-    }
-   /* public PhoneNumberUtility(PhoneNumberUtil phoneNumberUtil){
+    private PhoneNumberUtil phoneNumberUtil ;
+    public PhoneNumberUtility(PhoneNumberUtil phoneNumberUtil){
         phoneNumberUtil = PhoneNumberUtil.getInstance();
     }
-*/
     public boolean isValidPhoneNumber(String phoneNumber) {
         try {
             Phonenumber.PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneNumber, null);
