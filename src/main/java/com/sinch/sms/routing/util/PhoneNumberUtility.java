@@ -4,15 +4,14 @@ import com.sinch.sms.routing.exception.InvalidPhoneNumberException;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
-import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class PhoneNumberUtility {
 
-    private PhoneNumberUtil phoneNumberUtil ;
-    public PhoneNumberUtility(PhoneNumberUtil phoneNumberUtil){
+    private final PhoneNumberUtil phoneNumberUtil;
+    public PhoneNumberUtility(){
         phoneNumberUtil = PhoneNumberUtil.getInstance();
     }
     public boolean isValidPhoneNumber(String phoneNumber) {
