@@ -24,6 +24,7 @@ public class MessageRoutingService {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageRoutingService.class);
     private SMSMessage smsMessage;
+    @Autowired
     private  PhoneNumberUtility phoneNumberUtility;
     private SMSRepository smsRepository;
     private SMSMessageEntity saveSMSMessageEntity;
@@ -37,11 +38,10 @@ public class MessageRoutingService {
     public MessageRoutingService() {
     }
 
-    public MessageRoutingService(SMSMessage smsMessage, Optional<SMSMessageEntity> smsMessageEntityfindById, SMSMessageEntity smsMessageEntity, PhoneNumberUtility phoneNumberUtility, SMSRepository smsRepository, SMSMessageEntity saveSMSMessageEntity, NumberOptoutService optoutService, CarrierService carrierService) {
+    public MessageRoutingService(SMSMessage smsMessage, Optional<SMSMessageEntity> smsMessageEntityfindById, SMSMessageEntity smsMessageEntity, SMSRepository smsRepository, SMSMessageEntity saveSMSMessageEntity, NumberOptoutService optoutService, CarrierService carrierService) {
         this.smsMessage = smsMessage;
         this.smsMessageEntityfindById = smsMessageEntityfindById;
         this.smsMessageEntity = smsMessageEntity;
-        this.phoneNumberUtility = phoneNumberUtility;
         this.smsRepository = smsRepository;
         this.saveSMSMessageEntity = saveSMSMessageEntity;
         this.optoutService = optoutService;
