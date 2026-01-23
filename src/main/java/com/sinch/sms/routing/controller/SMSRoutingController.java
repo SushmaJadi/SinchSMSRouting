@@ -43,9 +43,9 @@ public class SMSRoutingController {
             new RuntimeException("InternalServerError");
             return ResponseEntity.status(HttpStatusCode.valueOf(500)).body(smsMessage);
         } catch (NumberParseException e) {
-            throw new RuntimeException(e);
+            new NumberParseException(NumberParseException.ErrorType.valueOf(smsMessage.getReceiverPhoneNumber()),"Invalid Number");
         }
-
+        return ResponseEntity.ok().body(smsMessage);
     }
 
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
