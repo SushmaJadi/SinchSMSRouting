@@ -7,9 +7,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class CarrierService {
     private AreaCode areaCode;
-    private String Teslra;
-    private String Optus;
-
 
     public Carreir getLocalCarrier(Carreir carreir, Carreir carreir1) {
         return carreir;
@@ -17,20 +14,23 @@ public class CarrierService {
 
     public AreaCode isValiadateFormatToE164(String phoneNumber) {
 
-        var areaCode = switch (phoneNumber) {
-            case "^.[6][1]|[1-9]d{1,8}$":
-                yield AreaCode.AUSTRALIA;
-            case "^.[6][4]|[1-9]d{1,8}$":
-                yield AreaCode.NewZealand;
-            default:
-                yield AreaCode.UNKNOWN;
-        };
-        return areaCode;
+        boolean au = phoneNumber.substring(0, 3).matches("^.[0]|[+][6][1].?$");
+        boolean nz = phoneNumber.substring(0, 3).matches("^.[0]|[+][6][4].?$");
+
+        if (au) {
+            return AreaCode.AUSTRALIA;
+        } else if (nz) {
+            return AreaCode.NewZealand;
+        } else {
+            return AreaCode.UNKNOWN;
+        }
+
     }
+
 
     public Carreir isValiadateRegion(String phoneNumber) {
 
-        areaCode = isValiadateFormatToE164(phoneNumber);
+        this.areaCode = isValiadateFormatToE164(phoneNumber);
 
         return switch (areaCode) {
             case AUSTRALIA ->  getLocalCarrier(Carreir.TELSTRA,Carreir.OPTUS);

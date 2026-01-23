@@ -1,5 +1,6 @@
 package com.sinch.sms.routing.service;
 
+import com.google.i18n.phonenumbers.NumberParseException;
 import com.sinch.sms.routing.beans.NumberOptoutBean;
 import com.sinch.sms.routing.entity.NumberOptoutEntity;
 import com.sinch.sms.routing.repository.OptoutRepository;
@@ -28,23 +29,23 @@ public class NumberOptoutService {
 
 
     @Transactional
-    public NumberOptoutBean saveOptOutNumber(String phoneNumber) {
-        logger.info("Saving optout number in DB "+ phoneNumber);
+    public NumberOptoutBean saveOptOutNumber(String phoneNumber) throws NumberParseException {
+        logger.info("Saving optout number in DB " + phoneNumber);
         String normalizedPhoneNumber = phoneNumberUtility.validateAndNormalize(phoneNumber);
         numberOptoutBean = new NumberOptoutBean(normalizedPhoneNumber);
         numberOptoutEntity = optoutRepository.save(getOptOutNumberMapping(numberOptoutBean));
-    return  getOptOutNumberMapping(Optional.of(numberOptoutEntity));
+        return getOptOutNumberMapping(Optional.of(numberOptoutEntity));
     }
 
     @Transactional
-    public NumberOptoutBean optOutNumberfindbyId(String phoneNumber) {
+    public NumberOptoutBean optOutNumberfindbyId(String phoneNumber) throws NumberParseException {
         String validatedNumber = phoneNumberUtility.validateAndNormalize(phoneNumber);
         numberOptoutEntitybyId = optoutRepository.findById(validatedNumber);
         return getOptOutNumberMapping(numberOptoutEntitybyId);
     }
 
     @Transactional
-    public void optoutNumberRemove(String phoneNumber) {
+    public void optoutNumberRemove(String phoneNumber) throws NumberParseException {
 
         String validatedNumber = phoneNumberUtility.validateAndNormalize(phoneNumber);
         numberOptoutEntitybyId = optoutRepository.findById(validatedNumber);

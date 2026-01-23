@@ -1,6 +1,5 @@
 package com.sinch.sms.routing.entity;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class NumberOptoutEntity {
 
     @Id
-    @Nullable
+   //cd @Nullable
     @Column(name = "id")
     private int id;
     @Column(name = "phone_number")

@@ -1,5 +1,6 @@
 package com.sinch.sms.routing.service;
 
+import com.google.i18n.phonenumbers.NumberParseException;
 import com.sinch.sms.routing.beans.SMSMessage;
 import com.sinch.sms.routing.entity.SMSMessageEntity;
 import com.sinch.sms.routing.repository.SMSRepository;
@@ -7,14 +8,12 @@ import com.sinch.sms.routing.util.AreaCode;
 import com.sinch.sms.routing.util.Carreir;
 import com.sinch.sms.routing.util.PhoneNumberUtility;
 import com.sinch.sms.routing.util.SMSStatus;
-import org.hibernate.exception.JDBCConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,15 +24,16 @@ public class MessageRoutingService {
     private static final Logger logger = LoggerFactory.getLogger(MessageRoutingService.class);
     private SMSMessage smsMessage;
     @Autowired
-    private  PhoneNumberUtility phoneNumberUtility;
+    private PhoneNumberUtility phoneNumberUtility;
+    @Autowired
     private SMSRepository smsRepository;
     private SMSMessageEntity saveSMSMessageEntity;
     private Optional<SMSMessageEntity> smsMessageEntityfindById;
     private NumberOptoutService optoutService;
     private SMSMessageEntity smsMessageEntity;
+    @Autowired
     private CarrierService carrierService;
 
-    private AreaCode areaCode;
 
     public MessageRoutingService() {
     }
@@ -42,46 +42,42 @@ public class MessageRoutingService {
         this.smsMessage = smsMessage;
         this.smsMessageEntityfindById = smsMessageEntityfindById;
         this.smsMessageEntity = smsMessageEntity;
-        this.smsRepository = smsRepository;
+        // this.smsRepository = smsRepository;
         this.saveSMSMessageEntity = saveSMSMessageEntity;
         this.optoutService = optoutService;
         this.carrierService = carrierService;
+
     }
 
 
     @Transactional
-    public SMSMessage routedMessageStatusById(int id)  {
-        logger.info("SMS Message routed suffessfully from Service" + id);
-        try {
-            if (smsRepository.existsById(id)) {
-                smsMessageEntityfindById = smsRepository.findById(id);
-                smsMessage = smsBeanMapping(smsMessageEntityfindById.get());
-                logger.info("SMS Message routed suffessfully from Service" + smsMessage.toString());
-            }
-            return smsMessage;
-        } catch (Exception e) {
-            new JDBCConnectionException("error", new SQLException(), e.getMessage());
+    public SMSMessage routedMessageStatusById(int id) {
+
+        if (Optional.of(id).isPresent()) {
+            smsMessageEntityfindById = smsRepository.findById(id);
+            smsMessage = smsBeanMapping(smsMessageEntityfindById.get());
         }
-        return smsMessage ;
+        return smsMessage;
+
     }
 
 
     @Transactional
-    public SMSMessage saveMessage(SMSMessage smsMessage) {
-        boolean isOptout = isOptedOut(smsMessage.getReceiverPhoneNumber());
+    public SMSMessage saveMessage(SMSMessage smsMessage) throws NumberParseException {
 
-        if (isOptout) {
+        boolean isValidPhoneNumber = isValidPhoneNumber(smsMessage.getReceiverPhoneNumber());
+        logger.info(smsMessage.getReceiverPhoneNumber() + " is valid Number: " + isValidPhoneNumber);
+        if (!isValidPhoneNumber) {
+            logger.info(smsMessage.getReceiverPhoneNumber() + ": The number has been optedout suffessfully from Message Service");
             optoutService.saveOptOutNumber(smsMessage.getReceiverPhoneNumber());
-            //  smsMessageEntity.setSmsStatus(SMSStatus.PENDING);
-
         }
-        smsMessage.setAreaCode(getAreaCode(smsMessageEntity.getReceiverPhoneNumber()));// Saving Message entity to DataBase
+        smsMessage.setAreaCode(getAreaCode(smsMessage.getReceiverPhoneNumber()));// Saving Message entity to DataBase
         smsMessage.setCarreir(getCarrier(smsMessage.getReceiverPhoneNumber()));
         smsMessageEntity = smsRepository.save(saveRoutMessage(smsMessage));
         smsMessageEntity.setSmsStatus(getMessageStatus(smsMessageEntity));
 
+        logger.info(smsMessageEntity.toString() + "has been saved successfully");
 
-        logger.info(smsMessageEntity.toString() + "Has been saved successfully");
         return smsBeanMapping(smsMessageEntity);
     }
 
@@ -94,7 +90,7 @@ public class MessageRoutingService {
     }
 
     public AreaCode getAreaCode(String phoneNumber) {
-        return areaCode = carrierService.isValiadateFormatToE164(phoneNumber);
+        return carrierService.isValiadateFormatToE164(phoneNumber);
     }
 
     public Carreir getCarrier(String phoneNumber) {
@@ -157,9 +153,8 @@ public class MessageRoutingService {
 
     }
 
-    public boolean isOptedOut(String phoneNumber) {
-        String bean = phoneNumberUtility.validateAndNormalize(phoneNumber);
-        return Optional.of(bean).isPresent();
+    public boolean isValidPhoneNumber(String phoneNumber) throws NumberParseException {
+        return Optional.of(phoneNumberUtility.validateAndNormalize(phoneNumber)).isPresent();
     }
 
 

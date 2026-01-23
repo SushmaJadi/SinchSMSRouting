@@ -1,5 +1,6 @@
 package com.sinch.sms.routing.controller;
 
+import com.google.i18n.phonenumbers.NumberParseException;
 import com.sinch.sms.routing.beans.SMSMessage;
 import com.sinch.sms.routing.service.MessageRoutingService;
 import com.sinch.sms.routing.util.SMSStatus;
@@ -30,31 +31,22 @@ public class SMSRoutingController {
 
     @RequestMapping(method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SMSMessage> sendMessage(@RequestBody SMSMessage smsMessage) {
-       boolean isOptout= messageRoutingService.isOptedOut(smsMessage.getReceiverPhoneNumber());
-
         try {
-            if (!isOptout) {
-               try {
-                   smsMessage = messageRoutingService.saveMessage(smsMessage);
-                   if (smsMessage.getSmsStatus().equals(SMSStatus.BLOCKED)) {
-                       return ResponseEntity.status(HttpStatusCode.valueOf(403)).body(smsMessage);
-                   } else if (smsMessage.getSmsStatus().equals(SMSStatus.PENDING)) {
-                       return ResponseEntity.status(HttpStatusCode.valueOf(201)).body(smsMessage);
-                   }
-                   return ResponseEntity.ok().body(smsMessage);
-               }catch (RuntimeException e){
-                   new RuntimeException("InternalServerError");
-                   return ResponseEntity.status(HttpStatusCode.valueOf(500)).body(smsMessage);
-               }
-
+            smsMessage = messageRoutingService.saveMessage(smsMessage);
+            if (smsMessage.getSmsStatus().equals(SMSStatus.BLOCKED)) {
+                return ResponseEntity.status(HttpStatusCode.valueOf(403)).body(smsMessage);
+            } else if (smsMessage.getSmsStatus().equals(SMSStatus.PENDING)) {
+                return ResponseEntity.status(HttpStatusCode.valueOf(201)).body(smsMessage);
             }
-        }catch (NumberFormatException e) {
-            new NumberFormatException("invalid phone number");
-            return ResponseEntity.status(HttpStatusCode.valueOf(400)).body(smsMessage);
+            return ResponseEntity.ok().body(smsMessage);
+        } catch (RuntimeException e) {
+            new RuntimeException("InternalServerError");
+            return ResponseEntity.status(HttpStatusCode.valueOf(500)).body(smsMessage);
+        } catch (NumberParseException e) {
+            throw new RuntimeException(e);
         }
-        return ResponseEntity.ok().body(smsMessage);
-    }
 
+    }
 
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
     public @Nullable ResponseEntity<SMSMessage> routedMessageGetById(@PathVariable("id") Integer id) {

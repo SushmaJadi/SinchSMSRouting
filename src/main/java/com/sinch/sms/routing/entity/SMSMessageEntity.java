@@ -3,7 +3,6 @@ package com.sinch.sms.routing.entity;
 import com.sinch.sms.routing.util.AreaCode;
 import com.sinch.sms.routing.util.Carreir;
 import com.sinch.sms.routing.util.SMSStatus;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.stereotype.Component;
@@ -20,8 +19,7 @@ import org.springframework.stereotype.Component;
 public class SMSMessageEntity {
     @Id
     @Column(name = "id")
-    @Nullable
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private int messageId;
     @Column(name = "massageBody")
     private String messageBody;

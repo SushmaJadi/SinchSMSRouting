@@ -1,51 +1,68 @@
 package com.sinch.sms.routing.util;
 
-import com.sinch.sms.routing.exception.InvalidPhoneNumberException;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.sinch.sms.routing.exception.InvalidPhoneNumberException;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class PhoneNumberUtility {
 
+    String phoneNumber;
     private final PhoneNumberUtil phoneNumberUtil;
-    public PhoneNumberUtility(){
+
+    public PhoneNumberUtility() {
         phoneNumberUtil = PhoneNumberUtil.getInstance();
     }
-    public boolean isValidPhoneNumber(String phoneNumber) {
+
+    public PhoneNumberUtility(PhoneNumberUtil phoneNumberUtil) {
+        this.phoneNumberUtil = PhoneNumberUtil.getInstance();
+    }
+
+    public boolean isValidCountryCode(String phoneNumber) throws Throwable {
         try {
             Phonenumber.PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneNumber, null);
             return phoneNumberUtil.isValidNumber(parsedNumber);
         } catch (NumberParseException e) {
-            return false;
+            throw new NumberParseException(NumberParseException.ErrorType.INVALID_COUNTRY_CODE, "Invalid Phone Number: " + phoneNumber).getCause();
         }
     }
 
-
-    public String normalizePhoneNumber(String phoneNumber) {
+    public boolean isValidPhoneNumber(String phoneNumber) throws Throwable {
         try {
             Phonenumber.PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneNumber, null);
-            if (!isValidPhoneNumber(phoneNumber)) {
-                return phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
-            }
-            return phoneNumber; // Return original if invalid
+            return phoneNumberUtil.isValidNumber(parsedNumber);
         } catch (NumberParseException e) {
-            return phoneNumber; // Return original if parsing fails
+            throw new NumberParseException(NumberParseException.ErrorType.NOT_A_NUMBER, "Invalid Phone Number: " + phoneNumber).getCause();
         }
     }
 
-    public String validateAndNormalize(String phoneNumber) {
-        validatePhoneNumber(phoneNumber);
-        /*isValidLength(phoneNumber);
-        isValidAreaCode(phoneNumber);
-        getCountryCode(phoneNumber);*/
-        return normalizePhoneNumber(phoneNumber);
+    public String normalizePhoneNumber(String phoneNumber) throws NumberParseException {
+        try {
+            Phonenumber.PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneNumber, null);
+
+            if (!isValidPhoneNumber(phoneNumber)) {
+                this.phoneNumber = phoneNumberUtil.format(parsedNumber, PhoneNumberUtil.PhoneNumberFormat.E164);
+                return this.phoneNumber;
+            }
+            // Return exception if invalid
+        } catch (NumberParseException e) {
+            throw new NumberParseException(NumberParseException.ErrorType.NOT_A_NUMBER, "invalid phone format"); // Return original if parsing fails
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        return this.phoneNumber;
+    }
+
+    public String validateAndNormalize(String phoneNumber) throws NumberParseException {
+        this.phoneNumber = normalizePhoneNumber(phoneNumber);
+        return this.phoneNumber;
 
     }
 
-    public void validatePhoneNumber(String phoneNumber) {
+    public void validatePhoneNumber(String phoneNumber) throws Throwable {
         if (!isValidPhoneNumber(phoneNumber)) {
             new InvalidPhoneNumberException("Invalid phone number format: " + phoneNumber);
         }
@@ -77,17 +94,6 @@ public class PhoneNumberUtility {
         return true;
     }
 
-    public String getCountryCode(String phoneNumber) {
-        try {
-            Phonenumber.PhoneNumber parsedNumber = phoneNumberUtil.parse(phoneNumber, null);
-            if (phoneNumberUtil.isValidNumber(parsedNumber)) {
-                return phoneNumberUtil.getRegionCodeForNumber(parsedNumber);
-            }
-            return null;
-        } catch (NumberParseException e) {
-            return null;
-        }
-    }
 
 
 }

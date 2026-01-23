@@ -1,10 +1,10 @@
 package com.sinch.sms.routing.controller;
 
+import com.google.i18n.phonenumbers.NumberParseException;
 import com.sinch.sms.routing.beans.NumberOptoutBean;
 import com.sinch.sms.routing.exception.InvalidPhoneNumberException;
 import com.sinch.sms.routing.service.NumberOptoutService;
 import com.sinch.sms.routing.util.PhoneNumberUtility;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,33 +28,35 @@ public class OptoutNumberController {
 
     @RequestMapping( method = RequestMethod.POST)
     public ResponseEntity<NumberOptoutBean> saveOptoutNumber( @RequestBody String phoneNumber) {
-       try {
-           numberOptoutBean = numberOptoutService.saveOptOutNumber(phoneNumber);
-           if (!Optional.of(numberOptoutBean).isPresent()) {
-               return ResponseEntity.status(500).build();
-           }
-           return ResponseEntity.ok(numberOptoutBean);
-       }
-       catch (RuntimeException e){
-           new RuntimeException("Internal server Error");
-           return ResponseEntity.status(500).build();
-       }
+        try {
+            numberOptoutBean = numberOptoutService.saveOptOutNumber(phoneNumber);
+            if (!Optional.of(numberOptoutBean).isPresent()) {
+                return ResponseEntity.status(500).build();
+            }
+            return ResponseEntity.ok(numberOptoutBean);
+        } catch (RuntimeException e) {
+            new RuntimeException("Internal server Error");
+            return ResponseEntity.status(500).build();
+        } catch (NumberParseException e) {
+            throw new RuntimeException(e);
+        }
     }
     @RequestMapping(path = "/{phoneNumber}", method = RequestMethod.GET)
     public ResponseEntity<NumberOptoutBean> optoutNumber(@PathVariable("phoneNumber") String phoneNumber) {
         try {
             numberOptoutBean = numberOptoutService.optOutNumberfindbyId(phoneNumber);
             return ResponseEntity.status(200).body(numberOptoutBean);
-        }
-        catch (RuntimeException e){
+        } catch (RuntimeException e) {
             new InvalidPhoneNumberException("No Number available");
             return ResponseEntity.notFound().build();
+        } catch (NumberParseException e) {
+            throw new RuntimeException(e);
         }
 
     }
 
     @RequestMapping(path = "/{phoneNumber}", method = RequestMethod.DELETE)
-    public ResponseEntity<NumberOptoutBean> optoutNumberRemove(@PathVariable("phoneNumber") String phoneNumber) {
+    public ResponseEntity<NumberOptoutBean> optoutNumberRemove(@PathVariable("phoneNumber") String phoneNumber) throws NumberParseException {
         numberOptoutService.optoutNumberRemove(phoneNumber);
         return ResponseEntity.ok().build();
     }
