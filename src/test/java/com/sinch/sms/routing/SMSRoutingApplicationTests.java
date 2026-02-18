@@ -7,72 +7,125 @@ import com.sinch.sms.routing.beans.SMSMessage;
 import com.sinch.sms.routing.controller.SMSRoutingController;
 import com.sinch.sms.routing.entity.SMSMessageEntity;
 import com.sinch.sms.routing.repository.SMSRepository;
+import com.sinch.sms.routing.service.CarrierService;
 import com.sinch.sms.routing.service.MessageRoutingService;
+import com.sinch.sms.routing.util.AreaCode;
+import com.sinch.sms.routing.util.Carreir;
 import com.sinch.sms.routing.util.PhoneNumberUtility;
+import com.sinch.sms.routing.util.SMSStatus;
+import jakarta.annotation.sql.DataSourceDefinition;
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
 
 @SpringBootTest
+@DataSourceDefinition(name = "mydatabase",
+        className = "org.h2.Driver",
+        url = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
+        user = "sa",
+        password = "",
+        properties = {"databaseName= testdb"})
 @ExtendWith(MockitoExtension.class)
+@RequiredArgsConstructor
 public class SMSRoutingApplicationTests {
 
     @Mock
     private SMSRoutingController smsRoutingController;
     @Mock
-    @Autowired
+    // @Autowired
     private MessageRoutingService messageRoutingService;
     @Mock
     private SMSRepository smsRepository;
     @Mock
     private PhoneNumberUtility phoneNumberUtility;
-
+    @Mock
+    private CarrierService carrierService;
+    @Mock
+    private SMSMessageEntity smsMessageEntity;
 
     @Mock
     private PhoneNumberUtil phoneNumberUtil;
-
     @InjectMocks
     private SMSRoutingController smsRoutingMockController;
     @InjectMocks
-    @Autowired
+    //  @Autowired
     private MessageRoutingService messageRoutingServiceMock;
 
     @InjectMocks
     private SMSMessage smsMessage;
     @InjectMocks
-    private SMSMessageEntity smsMessageEntity;
+    private SMSMessageEntity smsMessageEntityMock;
     @InjectMocks
     PhoneNumberUtility phoneNumberUtilityMock;
+    @InjectMocks
+    private CarrierService carrierServiceMock;
+    @InjectMocks
+    private SMSMessage smsMessageMock;
+
+    @Mock
+    Phonenumber.PhoneNumber phoneNumber;
 
 
-    @Test
-    void contextLoads() throws NumberParseException {
+    @BeforeEach
+    void contextLoads() throws Throwable {
         this.smsRoutingController = new SMSRoutingController(messageRoutingService);
         this.messageRoutingService = new MessageRoutingService();
         this.phoneNumberUtil = PhoneNumberUtil.getInstance();
-        // this.phoneNumberUtility = new PhoneNumberUtility(phoneNumberUtil);
-        // this. phoneNumberUtilityMock = new PhoneNumberUtility(phoneNumberUtil);
         this.smsMessage = getSMSBean();
+        this.smsMessageEntity = getMessageEntityMapping(smsMessage);
 
-        Phonenumber.PhoneNumber phoneNumber = phoneNumberUtil.parse(smsMessage.getReceiverPhoneNumber(), "null");
+        phoneNumber = phoneNumberUtil.parse(smsMessage.getReceiverPhoneNumber(), "null");
 
-
+        System.out.println(smsMessage.toString());
         int messageId = 1;
-        //Mockito.when(phoneNumberUtility.validateAndNormalize(smsMessage.getReceiverPhoneNumber())).thenReturn(phoneNumberUtility.normalizePhoneNumber(smsMessage.getReceiverPhoneNumber()));
-        Mockito.when(messageRoutingService.isValidPhoneNumber(smsMessage.getReceiverPhoneNumber())).thenReturn(Optional.of(phoneNumberUtility.validateAndNormalize(smsMessage.getReceiverPhoneNumber())).isPresent());
-        Mockito.when(messageRoutingService.isValidPhoneNumber(smsMessage.getReceiverPhoneNumber()) == false).thenReturn(Optional.of(messageRoutingServiceMock.saveMessage(getSmsMessage())).isPresent() == true);
-        Mockito.when(Optional.of(messageRoutingService.saveMessage(getSMSBean())))
-                .thenReturn(Optional.ofNullable(getSmsMessage()));
-        Mockito.when(smsRoutingController.sendMessage(getSMSBean())).thenReturn(ResponseEntity.ok(messageRoutingServiceMock.saveMessage(getSmsMessage())));
+
+
+        phoneNumberValidityTest();
+        //  messageRoutingServiceTest(smsMessage.getReceiverPhoneNumber(),phoneNumberUtilityMock);
     }
+
+    @Test
+    public void phoneNumberValidityTest() throws Throwable {
+        phoneNumber = phoneNumberUtil.parse(smsMessage.getReceiverPhoneNumber(), "null");
+        smsMessageMock = this.smsMessage;
+        Mockito.when(carrierService.isValiadateFormatToE164(smsMessage.getReceiverPhoneNumber())).thenReturn(AreaCode.AUSTRALIA);
+        Mockito.when(carrierService.isValiadateRegion(smsMessage.getReceiverPhoneNumber())).thenReturn(carrierServiceMock.getLocalCarrier(Carreir.TELSTRA, Carreir.OPTUS));
+        smsMessageMock.setAreaCode(carrierService.isValiadateFormatToE164(smsMessage.getReceiverPhoneNumber()));
+        smsMessageMock.setCarreir(carrierService.isValiadateRegion(smsMessage.getReceiverPhoneNumber()));
+        System.out.println(getMessageEntityMapping(smsMessage));
+        Mockito.when(smsRepository.save(getMessageEntityMapping(smsMessageMock))).thenReturn(getMessageEntityMapping(smsMessageMock));
+        this.smsMessageEntityMock = smsRepository.save(getMessageEntityMapping(smsMessageMock));
+        System.out.println(smsMessageEntityMock.toString() + "......." + smsMessageMock);
+        Assertions.assertEquals(Optional.of(smsMessageEntityMock).isPresent(), messageRoutingServiceMock.getMessageStatus(smsMessageEntityMock).equals(SMSStatus.SENT));
+        smsMessageEntityMock.setSmsStatus(messageRoutingServiceMock.getMessageStatus(smsMessageEntityMock));
+        System.out.println(smsMessageEntityMock.toString());
+
+
+    }
+  /*  @Test
+    public void messageRoutingServiceTest(String phoneNumber, PhoneNumberUtility utilMock) throws Throwable {
+     //  System.out.println( utilMock.validateAndNormalize(phoneNumber));
+        Phonenumber.PhoneNumber farmatedNumber = phoneNumberUtil.parse(smsMessage.getReceiverPhoneNumber(), "null");
+        Mockito.when(phoneNumberUtility.normalizePhoneNumber(smsMessage.getReceiverPhoneNumber())).thenReturn(phoneNumberUtil.format(farmatedNumber, PhoneNumberUtil.PhoneNumberFormat.E164));
+        Mockito.when(phoneNumberUtility.isValidPhoneNumber(smsMessage.getReceiverPhoneNumber())).thenReturn(Optional.of(phoneNumber).isPresent());
+        Mockito.when(phoneNumberUtility.validateAndNormalize(smsMessage.getReceiverPhoneNumber())).thenReturn(phoneNumberUtil.format(farmatedNumber, PhoneNumberUtil.PhoneNumberFormat.E164));
+
+        Mockito.when(messageRoutingService.saveMessage(smsMessage)).thenReturn(getMessageBeanMapping(smsMessageEntityMock));
+        Mockito.when(smsRoutingController.sendMessage(getSMSBean())).thenReturn(ResponseEntity.ok(messageRoutingServiceMock.saveMessage(smsMessage)));
+
+
+        Assertions.assertEquals(messageRoutingServiceMock.saveMessage(smsMessageMock), getMessageBeanMapping(smsMessageEntityMock));
+
+    }*/
 
 
     private SMSMessageEntity getMessageEntityMapping(SMSMessage message) {
