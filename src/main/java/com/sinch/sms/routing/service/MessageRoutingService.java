@@ -38,7 +38,16 @@ public class MessageRoutingService {
     public MessageRoutingService() {
     }
 
-    public MessageRoutingService(SMSMessage smsMessage, Optional<SMSMessageEntity> smsMessageEntityfindById, SMSMessageEntity smsMessageEntity, SMSRepository smsRepository, SMSMessageEntity saveSMSMessageEntity, NumberOptoutService optoutService, CarrierService carrierService) {
+
+    public MessageRoutingService(PhoneNumberUtility phoneNumberUtility, CarrierService carrierService) {
+        this.phoneNumberUtility = phoneNumberUtility;
+        this.carrierService = carrierService;
+    }
+
+    public MessageRoutingService(SMSMessage smsMessage, Optional<SMSMessageEntity> smsMessageEntityfindById,
+                                 SMSMessageEntity smsMessageEntity, SMSRepository smsRepository,
+                                 SMSMessageEntity saveSMSMessageEntity, NumberOptoutService optoutService,
+                                 CarrierService carrierService, PhoneNumberUtility phoneNumberUtility) {
         this.smsMessage = smsMessage;
         this.smsMessageEntityfindById = smsMessageEntityfindById;
         this.smsMessageEntity = smsMessageEntity;
